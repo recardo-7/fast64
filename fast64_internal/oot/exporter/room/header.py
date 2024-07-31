@@ -6,6 +6,7 @@ from ....utility import CData, indent
 from ...oot_utility import getObjectList
 from ...oot_constants import ootData
 from ...room.properties import OOTRoomHeaderProperty
+from ...actor.properties import OOTActorProperty
 from ..utility import Utility
 from ..actor import Actor
 
@@ -137,11 +138,28 @@ class RoomActors:
     actorList: list[Actor]
 
     @staticmethod
+    def get_rotation_values(actorProp: OOTActorProperty, blender_rot_values: list[int]):
+        # Figure out which rotation to export, Blender's or the override
+        override = "Override" if actorProp.actorID == "Custom" else ""
+        rot_values = [getattr(actorProp, f"rot{override}{rot}") for rot in ["X", "Y", "Z"]]
+        export_rot_values = [f"DEG_TO_BINANG({(rot * (180 / 0x8000)):.3f})" for rot in blender_rot_values]
+
+        if actorProp.actorID == "Custom":
+            export_rot_values = rot_values if actorProp.rotOverride else export_rot_values
+        else:
+            for i, rot in enumerate(["X", "Y", "Z"]):
+                if getattr(actorProp, f"isRot{rot}UsedByActor"):
+                    export_rot_values[i] = rot_values[i]
+
+        assert len(export_rot_values) == 3
+        return export_rot_values
+
+    @staticmethod
     def new(name: str, sceneObj: Optional[Object], roomObj: Optional[Object], transform: Matrix, headerIndex: int):
         actorList: list[Actor] = []
         actorObjList = getObjectList(sceneObj.children_recursive, "EMPTY", "Actor", parentObj=roomObj)
         for obj in actorObjList:
-            actorProp = obj.ootActorProperty
+            actorProp: OOTActorProperty = obj.ootActorProperty
             if not Utility.isCurrentHeaderValid(actorProp.headerSettings, headerIndex):
                 continue
 
@@ -159,10 +177,7 @@ class RoomActors:
                 else:
                     actor.id = actorProp.actorID
 
-                if actorProp.rotOverride:
-                    actor.rot = ", ".join([actorProp.rotOverrideX, actorProp.rotOverrideY, actorProp.rotOverrideZ])
-                else:
-                    actor.rot = ", ".join(f"DEG_TO_BINANG({(r * (180 / 0x8000)):.3f})" for r in rot)
+                actor.rot = ", ".join(RoomActors.get_rotation_values(actorProp, rot))
 
                 actor.name = (
                     ootData.actorData.actorsByID[actorProp.actorID].name.replace(

@@ -5,6 +5,7 @@ from bpy.types import Object
 from ....utility import PluginError, CData, indent
 from ...oot_utility import getObjectList
 from ...oot_constants import ootData
+from ...actor.properties import OOTActorProperty
 from ..utility import Utility
 from ..actor import Actor
 
@@ -59,10 +60,8 @@ class SceneTransitionActors:
         entries: list[TransitionActor] = []
         for obj in actorObjList:
             transActorProp = obj.ootTransitionActorProperty
-            if (
-                Utility.isCurrentHeaderValid(transActorProp.actor.headerSettings, headerIndex)
-                and transActorProp.actor.actorID != "None"
-            ):
+            actorProp: OOTActorProperty = transActorProp.actor
+            if Utility.isCurrentHeaderValid(actorProp.headerSettings, headerIndex) and actorProp.actorID != "None":
                 pos, rot, _, _ = Utility.getConvertedTransform(transform, sceneObj, obj, True)
                 transActor = TransitionActor()
 
@@ -76,22 +75,22 @@ class SceneTransitionActors:
                 front = (fromIndex, Utility.getPropValue(transActorProp, "cameraTransitionFront"))
                 back = (toIndex, Utility.getPropValue(transActorProp, "cameraTransitionBack"))
 
-                if transActorProp.actor.actorID == "Custom":
-                    transActor.id = transActorProp.actor.actorIDCustom
+                if actorProp.actorID == "Custom":
+                    transActor.id = actorProp.actorIDCustom
                 else:
-                    transActor.id = transActorProp.actor.actorID
+                    transActor.id = actorProp.actorID
 
                 transActor.name = (
-                    ootData.actorData.actorsByID[transActorProp.actor.actorID].name.replace(
-                        f" - {transActorProp.actor.actorID.removeprefix('ACTOR_')}", ""
+                    ootData.actorData.actorsByID[actorProp.actorID].name.replace(
+                        f" - {actorProp.actorID.removeprefix('ACTOR_')}", ""
                     )
-                    if transActorProp.actor.actorID != "Custom"
+                    if actorProp.actorID != "Custom"
                     else "Custom Actor"
                 )
 
                 transActor.pos = pos
                 transActor.rot = f"DEG_TO_BINANG({(rot[1] * (180 / 0x8000)):.3f})"  # TODO: Correct axis?
-                transActor.params = transActorProp.actor.actorParam
+                transActor.params = actorProp.params if actorProp.actorID != "Custom" else actorProp.actorParam
                 transActor.roomFrom, transActor.cameraFront = front
                 transActor.roomTo, transActor.cameraBack = back
                 entries.append(transActor)
@@ -145,25 +144,23 @@ class SceneEntranceActors:
         actorObjList = getObjectList(sceneObj.children_recursive, "EMPTY", "Entrance")
         for obj in actorObjList:
             entranceProp = obj.ootEntranceProperty
-            if (
-                Utility.isCurrentHeaderValid(entranceProp.actor.headerSettings, headerIndex)
-                and entranceProp.actor.actorID != "None"
-            ):
+            actorProp: OOTActorProperty = entranceProp.actor
+            if Utility.isCurrentHeaderValid(actorProp.headerSettings, headerIndex) and actorProp.actorID != "None":
                 pos, rot, _, _ = Utility.getConvertedTransform(transform, sceneObj, obj, True)
                 entranceActor = EntranceActor()
 
                 entranceActor.name = (
-                    ootData.actorData.actorsByID[entranceProp.actor.actorID].name.replace(
-                        f" - {entranceProp.actor.actorID.removeprefix('ACTOR_')}", ""
+                    ootData.actorData.actorsByID[actorProp.actorID].name.replace(
+                        f" - {actorProp.actorID.removeprefix('ACTOR_')}", ""
                     )
-                    if entranceProp.actor.actorID != "Custom"
+                    if actorProp.actorID != "Custom"
                     else "Custom Actor"
                 )
 
-                entranceActor.id = "ACTOR_PLAYER" if not entranceProp.customActor else entranceProp.actor.actorIDCustom
+                entranceActor.id = "ACTOR_PLAYER" if not entranceProp.customActor else actorProp.actorIDCustom
                 entranceActor.pos = pos
                 entranceActor.rot = ", ".join(f"DEG_TO_BINANG({(r * (180 / 0x8000)):.3f})" for r in rot)
-                entranceActor.params = entranceProp.actor.actorParam
+                entranceActor.params = actorProp.params if not entranceProp.customActor else actorProp.actorParam
                 if entranceProp.tiedRoom is not None:
                     entranceActor.roomIndex = entranceProp.tiedRoom.ootRoomHeader.roomIndex
                 else:
