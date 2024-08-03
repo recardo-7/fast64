@@ -686,15 +686,10 @@ def getDisplayNameFromActorID(actorID: str):
 
 def handleActorWithRotAsParam(actorProp: OOTActorProperty, actorID: str, rotation: list[int]):
     if actorID in actorsWithRotAsParam:
-        if actorProp != "Custom":
-            actorProp.rotX = hex(rotation[0])
-            actorProp.rotY = hex(rotation[1])
-            actorProp.rotZ = hex(rotation[2])
-        else:
-            actorProp.rotOverride = True
-            actorProp.rotOverrideX = hex(rotation[0])
-            actorProp.rotOverrideY = hex(rotation[1])
-            actorProp.rotOverrideZ = hex(rotation[2])
+        actorProp.rotOverride = True
+        actorProp.rotOverrideX = hex(rotation[0])
+        actorProp.rotOverrideY = hex(rotation[1])
+        actorProp.rotOverrideZ = hex(rotation[2])
 
 
 def parseTransActorList(
@@ -758,10 +753,7 @@ def parseTransActorList(
 
             actorProp = transActorProp.actor
             setCustomProperty(actorProp, "actorID", actorID, ootData.actorData.ootEnumActorID)
-            if actorProp != "Custom":
-                actorProp.params = actorParam
-            else:
-                actorProp.actorParam = actorParam
+            actorProp.actorParam = actorParam
             handleActorWithRotAsParam(actorProp, actorID, rotation)
             unsetAllHeadersExceptSpecified(actorProp.headerSettings, headerIndex)
 
@@ -847,10 +839,7 @@ def parseSpawnList(
             spawnProp.customActor = actorID != "ACTOR_PLAYER"
             actorProp = spawnProp.actor
             setCustomProperty(actorProp, "actorID", actorID, ootData.actorData.ootEnumActorID)
-            if actorProp != "Custom":
-                actorProp.params = actorParam
-            else:
-                actorProp.actorParam = actorParam
+            actorProp.actorParam = actorParam
             handleActorWithRotAsParam(actorProp, actorID, rotation)
             unsetAllHeadersExceptSpecified(actorProp.headerSettings, headerIndex)
 
@@ -913,10 +902,7 @@ def parseActorList(
             actorProp = actorObj.ootActorProperty
 
             setCustomProperty(actorProp, "actorID", actorID, ootData.actorData.ootEnumActorID)
-            if actorProp != "Custom":
-                actorProp.params = actorParam
-            else:
-                actorProp.actorParam = actorParam
+            actorProp.actorParam = actorParam
             handleActorWithRotAsParam(actorProp, actorID, rotation)
             unsetAllHeadersExceptSpecified(actorProp.headerSettings, headerIndex)
 
